@@ -1,4 +1,4 @@
-# bplus🤷🏻‍♂️ Server: The AI-Powered Modular App Environment
+# bplus🤷🏻‍♂️ Server: Modular App Environment
 
 A unified Node.js server designed to host, create, and manage multiple self-contained web applications. This project acts as a meta-application, providing tools to build other applications directly from your browser, either manually or with the help of AI.
 
@@ -50,7 +50,7 @@ You must have [Node.js](https://nodejs.org/en/download/) (v18 or later recommend
 3.  **Set up environment variables:**
     Create a `.env` file in the root of the project by copying the example file.
     ```sh
-    cp .env.example .env
+    cp env.example .env
     ```
     Now, open the `.env` file and add your Google Gemini API key. This is required for the **Gen Studio** app to function with Gemini models.
     ```env
@@ -153,4 +153,4 @@ This separation ensures that frontend and backend routes for different apps neve
 
 ## License
 
-Distributed under the ISC License. See `package.json` for more information.
+EasyIP: For personal use, keep money out of it.
