@@ -70,7 +70,7 @@ You can run the server in two modes:
     npm run dev
     ```
 
-*   **Production Mode:** Runs the server with a standard `node` command.
+*   **Production Mode:(Not recommended if you are creating apps!)** Runs the server with a standard `node` command. !!!NOTE!!! This will not autoreload the server when you create a new app. You will have stop the server(CTRL-C) and restart if you create a new app.  
     ```sh
     npm start
     ```
