@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="app-navbar">
+        <div class="app-nav-container">
+            <a href="/" class="app-logo">← Home</a>
+        </div>
+    </nav>
+    <div class="container">
+        <h1>App Manager</h1>
+        <p class="subtitle">Edit or delete existing applications.</p>
+
+        <div id="status-message" class="status-hidden"></div>
+
+        <div class="form-group">
+            <label for="appSelector">Select an App to Manage:</label>
+            <select id="appSelector">
+                <option value="">-- Choose an App --</option>
+            </select>
+        </div>
+
+        <div id="editor-section" class="hidden">
+            <div class="code-grid">
+                <div class="form-group code-group">
+                    <label for="routesJs">Backend (routes.js)</label>
+                    <textarea id="routesJs" name="routesJs"></textarea>
+                </div>
+                <div class="form-group code-group">
+                    <label for="indexHtml">Frontend (public/index.html)</label>
+                    <textarea id="indexHtml" name="indexHtml"></textarea>
+                </div>
+                <div class="form-group code-group">
+                    <label for="scriptJs">Frontend JS (public/script.js)</label>
+                    <textarea id="scriptJs" name="scriptJs"></textarea>
+                </div>
+                 <div class="form-group code-group">
+                    <label for="styleCss">Frontend CSS (public/style.css)</label>
+                    <textarea id="styleCss" name="styleCss"></textarea>
+                </div>
+            </div>
+
+            <div class="button-container">
+                <div class="context-buttons">
+                    <button type="button" id="generate-context-btn" class="secondary-btn">1. Generate Context</button>
+                    <button type="button" id="generate-prompt-btn" class="secondary-btn" disabled>2. Create LLM Prompt</button>
+                    <button type="button" id="copy-context-btn" class="secondary-btn" disabled>Copy Context Only</button>
+                </div>
+                <div class="main-action-buttons">
+                    <button type="button" id="save-changes-btn">Save Changes</button>
+                    <button type="button" id="delete-app-btn" class="danger-btn">Delete This App</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW: Section to display the final generated prompt -->
+        <div id="prompt-display-section" class="hidden">
+            <h3>Generated LLM Prompt</h3>
+            <p>Copy the entire text below and paste it into the LLM.</p>
+            <textarea id="final-prompt-display" readonly></textarea>
+        </div>
+    </div>
+    <textarea id="clipboard-helper" class="hidden"></textarea>
+
+    <script src="script.js"></script>
+</body>
+</html>

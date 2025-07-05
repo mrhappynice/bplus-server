@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Builder</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="app-navbar">
+        <div class="app-nav-container">
+            <a href="/" class="app-logo">← Home</a>
+        </div>
+    </nav>
+    <div class="container">
+        <h1>App Builder</h1>
+        <p class="subtitle">Create a new application within the unified server.</p>
+
+        <div id="status-message" class="status-hidden"></div>
+
+        <form id="app-builder-form">
+            <div class="form-group">
+                <label for="appName">App Name:</label>
+                <input type="text" id="appName" name="appName" placeholder="e.g., My Awesome App" required>
+                <small>This will be converted to a URL-friendly name like `my-awesome-app`.</small>
+            </div>
+
+            <div class="code-grid">
+                <div class="form-group code-group">
+                    <label for="routesJs">Backend (routes.js)</label>
+                    <textarea id="routesJs" name="routesJs"></textarea>
+                </div>
+                <div class="form-group code-group">
+                    <label for="indexHtml">Frontend (public/index.html)</label>
+                    <textarea id="indexHtml" name="indexHtml"></textarea>
+                </div>
+                <div class="form-group code-group">
+                    <label for="scriptJs">Frontend JS (public/script.js)</label>
+                    <textarea id="scriptJs" name="scriptJs"></textarea>
+                </div>
+                 <div class="form-group code-group">
+                    <label for="styleCss">Frontend CSS (public/style.css)</label>
+                    <textarea id="styleCss" name="styleCss"></textarea>
+                </div>
+            </div>
+            <div class="button-container">
+                <button type="submit" id="create-app-btn">Create App</button>
+                <button type="button" id="generate-ai-prompt-btn" class="secondary-btn">Generate LLM Prompt</button>
+            </div>
+        </form>
+
+        <div id="prompt-display-section" class="hidden">
+            <h3>Generated LLM Prompt</h3>
+            <p>Copy the text below into your LLM. Then, paste the generated code for each file into the corresponding text area above.</p>
+            <textarea id="final-prompt-display" readonly></textarea>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

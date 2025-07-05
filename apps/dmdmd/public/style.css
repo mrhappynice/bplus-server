@@ -1,0 +1,121 @@
+body {
+    font-family: 'Comic Sans MS', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Playful/Crazy Font */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+    color: #333;
+    transition: background-color 0.5s ease-in-out, filter 0.5s ease-in-out;
+    overflow: hidden; /* Prevent scrollbars from animation */
+}
+
+.container {
+    background-color: #ffffff;
+    padding: 30px 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 90%;
+    max-width: 500px;
+    border: 2px solid #ccc;
+    transition: transform 0.3s ease-in-out, filter 0.3s ease-in-out, border-color 0.3s ease-in-out;
+}
+
+h1 {
+    color: #d32f2f;
+    margin-bottom: 20px;
+    font-size: 2.8em;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    letter-spacing: 1px;
+}
+
+p {
+    font-size: 1.1em;
+    line-height: 1.6;
+}
+
+button {
+    background-color: #ff5722;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    font-size: 1.2em;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
+    margin-top: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    font-weight: bold;
+}
+
+button:hover {
+    background-color: #e64a19;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+button:active {
+    background-color: #bf360c;
+    transform: translateY(0);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.display {
+    margin-top: 30px;
+    padding: 20px;
+    border: 1px dashed #ff5722;
+    border-radius: 10px;
+    background-color: #fff3e0;
+    transition: all 0.3s ease;
+}
+
+#crazinessMessage {
+    font-weight: bold;
+    color: #c2185b;
+    font-size: 1.4em;
+    margin-bottom: 10px;
+}
+
+#crazinessLevel {
+    font-style: italic;
+    color: #7b1fa2;
+}
+
+/* --- Crazy Effects Animations --- */
+
+/* Shake effect */
+.shake {
+    animation: shake 0.2s infinite alternate;
+}
+
+@keyframes shake {
+    0% { transform: translateX(0) rotate(0deg); }
+    25% { transform: translateX(2px) rotate(0.5deg); }
+    50% { transform: translateX(-2px) rotate(-0.5deg); }
+    75% { transform: translateX(2px) rotate(0.5deg); }
+    100% { transform: translateX(-2px) rotate(-0.5deg); }
+}
+
+/* Pulse effect */
+.pulse {
+    animation: pulse 0.8s infinite alternate;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); box-shadow: 0 0 10px rgba(255, 0, 0, 0.3); }
+    100% { transform: scale(1.005); box-shadow: 0 0 20px rgba(255, 0, 0, 0.6); }
+}
+
+/* Distort effect (subtle warp and border-radius change) */
+.distort {
+    animation: distort 1.5s infinite alternate ease-in-out;
+}
+
+@keyframes distort {
+    0% { border-radius: 15px; }
+    33% { border-radius: 10px 20px 5px 25px; }
+    66% { border-radius: 25px 5px 20px 10px; }
+    100% { border-radius: 15px; }
+}

@@ -1,0 +1,2 @@
+py -X utf8 .\bpingest.py asdfasdf "change h1 to red" > asdf-context.txt
+// asdfasdf would be the app name, change to red would be the direction

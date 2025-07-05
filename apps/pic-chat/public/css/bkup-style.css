@@ -1,0 +1,394 @@
+/* Basic Setup */
+:root {
+    --primary-bg: #f4f4f9;
+    --secondary-bg: #ffffff;
+    --text-color: #333;
+    --header-bg: #5a67d8;
+    --accent-color: #4c51bf;
+    --border-color: #e2e8f0;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+/* NEW: Wrapper for the entire application */
+.app-wrapper {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+header {
+    background-color: var(--header-bg);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.75rem;
+}
+
+nav button {
+    background: none;
+    border: 1px solid white;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-left: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+nav button.active, nav button:hover {
+    background-color: var(--accent-color);
+}
+
+.hidden {
+    display: none !important;
+}
+
+main.hidden {
+    display: none;
+}
+
+/* MODIFIED: The app-container is now a flexbox layout parent */
+.app-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+}
+
+/* NEW: The main content area that will grow */
+.main-content {
+    flex: 1;
+    min-width: 0; /* Prevents flexbox overflow */
+}
+
+/* Multi-Select Controls */
+#timeline-controls, #multi-select-bar {
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+#multi-select-bar button, #timeline-controls button {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--accent-color);
+    background-color: var(--secondary-bg);
+    color: var(--accent-color);
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+#multi-select-bar button:hover, #timeline-controls button:hover {
+    background-color: #eef2ff;
+}
+#edit-selected-btn {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+/* Timeline & Themes View */
+.year-group, .theme-category {
+    margin-bottom: 2.5rem;
+}
+
+.year-group h2, .theme-category h2 {
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--accent-color);
+    cursor: pointer;
+    position: relative;
+    padding-left: 25px;
+    user-select: none;
+}
+.year-group h2::before, .theme-category h2::before {
+    content: '▼';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.8em;
+    transition: transform 0.2s ease-in-out;
+}
+.year-group.collapsed h2::before, .theme-category.collapsed h2::before {
+    transform: translateY(-50%) rotate(-90deg);
+}
+.year-group.collapsed .photo-grid, .theme-category.collapsed .theme-grid {
+    display: none;
+}
+
+.photo-grid, .theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.photo-card, .theme-card {
+    background-color: var(--secondary-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px var(--shadow-color);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    border: 3px solid transparent;
+}
+.photo-card.selected {
+    border-color: var(--header-bg);
+    box-shadow: 0 6px 12px rgba(90, 103, 216, 0.5);
+}
+.select-mode-active .photo-card:not(.selected) {
+    opacity: 0.6;
+}
+.select-mode-active .photo-card:not(.selected):hover {
+    opacity: 1;
+}
+
+.photo-card:hover, .theme-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px var(--shadow-color);
+}
+
+.photo-card img, .theme-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+}
+
+.theme-card .theme-name {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    text-align: center;
+    padding: 0.5rem;
+    font-weight: bold;
+}
+.empty-message {
+    background-color: var(--secondary-bg);
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-color);
+}
+
+/* MODIFIED: AI Assistant styled as a sticky sidebar */
+#ai-assistant {
+    width: 320px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 1rem;
+    background-color: var(--secondary-bg);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px var(--shadow-color);
+    margin-top: 0;
+}
+#ai-assistant h2 {
+    margin-top: 0;
+    color: var(--header-bg);
+}
+#ai-form {
+    display: flex;
+    flex-direction: column; /* Stack input and button vertically */
+    gap: 0.75rem;
+}
+#ai-form input {
+    flex-grow: 1;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 1rem;
+}
+#ai-form button {
+    padding: 0.75rem 1.5rem;
+    background-color: var(--header-bg);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s;
+}
+#ai-form button:hover {
+    background-color: var(--accent-color);
+}
+#ai-response {
+    background-color: var(--primary-bg);
+    padding: 1rem;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+    min-height: 40px;
+    white-space: pre-wrap;
+    max-height: 400px; /* Give response a max height */
+    overflow-y: auto;  /* and a scrollbar */
+}
+
+/* Modal Styling */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.modal-backdrop:not(.hidden) {
+    display: flex;
+}
+
+.modal-content {
+    background-color: var(--secondary-bg);
+    padding: 2rem;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 1100px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    color: #999;
+}
+
+.modal-body {
+    display: flex;
+    gap: 2rem;
+}
+
+.modal-image-container {
+    flex: 2;
+}
+#modal-img {
+    width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 5px;
+}
+
+.modal-form-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#modal-title {
+    margin-top: 0;
+    color: var(--header-bg);
+}
+
+#editor-form label, #tags-manager h3 {
+    display: block;
+    margin-top: 1rem;
+    margin-bottom: 0.25rem;
+    font-weight: bold;
+}
+
+#editor-form input, #editor-form textarea, #add-tag-form input, #add-tag-form select {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+#editor-form button, #add-tag-form button {
+    width: 100%;
+    padding: 0.75rem;
+    margin-top: 1rem;
+    background-color: var(--header-bg);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+#add-tag-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+#current-tags {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.tag-pill {
+    background-color: #e2e8f0;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+}
+
+.tag-pill .remove-tag {
+    margin-left: 0.5rem;
+    cursor: pointer;
+    font-weight: bold;
+    color: #718096;
+}
+.tag-pill .remove-tag:hover {
+    color: #2d3748;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1024px) {
+    .app-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    #ai-assistant {
+        width: auto;
+        position: static;
+        margin-top: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .modal-body {
+        flex-direction: column;
+    }
+    #modal-img {
+       max-height: 40vh;
+    }
+}

@@ -1,0 +1,151 @@
+Below are the complete files for the app named **`flip`**.
+
+--- START OF FILE apps/flip/routes.js ---
+const express = require('express');
+const router = express.Router();
+
+router.get('/status', (req, res) => {
+  res.json({ message: 'Flip app is running!' });
+});
+
+module.exports = router;
+--- END OF FILE apps/flip/routes.js ---
+
+--- START OF FILE apps/flip/public/index.html ---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flip - Dark Mode</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="scrolling-text-container">
+        <div class="scrolling-text">yeah</div>
+    </div>
+    <div class="container">
+        <h1>Flip - Dark Mode</h1>
+        <label class="switch">
+            <input type="checkbox" id="darkModeToggle">
+            <span class="slider round"></span>
+        </label>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+--- END OF FILE apps/flip/public/index.html ---
+
+--- START OF FILE apps/flip/public/script.js ---
+const darkModeToggle = document.getElementById('darkModeToggle');
+const body = document.body;
+
+darkModeToggle.addEventListener('change', () => {
+    if (darkModeToggle.checked) {
+        body.classList.add('dark-mode');
+    } else {
+        body.classList.remove('dark-mode');
+    }
+});
+--- END OF FILE apps/flip/public/script.js ---
+
+--- START OF FILE apps/flip/public/style.css ---
+body {
+    font-family: sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    display: flex;
+    flex-direction: column; /* Changed to column to stack elements vertically */
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    text-align: center;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+    background-color: #121212;
+    color: #f4f4f4;
+}
+
+.scrolling-text-container {
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    margin-bottom: 20px; /* Adjusted margin to move it above */
+    text-align: center; /* Center the container */
+}
+
+.scrolling-text {
+    display: inline-block;
+    animation: scroll 10s linear infinite;
+    font-size: 2em;
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+--- END OF FILE apps/flip/public/style.css ---

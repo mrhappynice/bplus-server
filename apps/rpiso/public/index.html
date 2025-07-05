@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Isometric RPG</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app-container">
+        <header>
+            <h1>RPISO</h1>
+            <p>An isometric adventure.</p>
+        </header>
+        <main id="game-area">
+            <div id="game-world">
+                <!-- Isometric grid will be rendered here by JavaScript -->
+            </div>
+        </main>
+        <aside id="ui-panel">
+            <div class="ui-box" id="player-stats">
+                <h2>Player</h2>
+                <div id="player-hp">HP: 100 / 100</div>
+            </div>
+            <div class="ui-box" id="log-container">
+                <h2>Log</h2>
+                <div id="message-log">
+                    <p>Welcome to the world of RPISO! Use arrow keys to move.</p>
+                </div>
+            </div>
+            <div class="ui-box" id="controls">
+                <h2>Controls</h2>
+                <p><strong>Arrow Keys:</strong> Move & Interact</p>
+                <button id="reset-button">Reset World</button>
+            </div>
+        </aside>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

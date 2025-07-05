@@ -1,0 +1,155 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #1a1a1a; /* Dark mode background */
+    margin: 0;
+    color: #e0e0e0; /* Light text for dark mode */
+}
+
+.stopwatch-container {
+    background-color: #2d2d2d; /* Darker container background */
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); /* Darker shadow */
+    text-align: center;
+    width: 90%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+h1 {
+    color: #61dafb; /* A vibrant light blue/teal for headings */
+    margin-bottom: 25px;
+    font-size: 2.2em;
+}
+
+.stopwatch-circle {
+    width: 250px; /* Equal width and height for a perfect circle */
+    height: 250px;
+    border: 8px solid #61dafb; /* Vibrant border */
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 30px;
+    box-shadow: inset 0 0 15px rgba(97, 218, 251, 0.3), 0 0 20px rgba(97, 218, 251, 0.2);
+    background-color: #3a3f4c; /* Darker background for the circle */
+}
+
+.stopwatch-display {
+    font-family: 'Roboto Mono', monospace; /* Monospace font for consistent digit width */
+    font-size: 2.8em;
+    color: #e0e0e0; /* Light color for display text */
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3); /* Slightly darker shadow */
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 25px;
+}
+
+button {
+    background-color: #007bff; /* Keep original vibrant button colors */
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    min-width: 100px;
+}
+
+button:hover:not(:disabled) {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+button:disabled {
+    background-color: #555555; /* Darker disabled color */
+    color: #aaaaaa; /* Lighter text for disabled */
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+#startBtn { background-color: #28a745; }
+#startBtn:hover:not(:disabled) { background-color: #218838; }
+
+#stopBtn { background-color: #dc3545; }
+#stopBtn:hover:not(:disabled) { background-color: #c82333; }
+
+#resetBtn { background-color: #ffc107; color: #1a1a1a; } /* Darker text for reset button */
+#resetBtn:hover:not(:disabled) { background-color: #e0a800; }
+
+#lapBtn { background-color: #17a2b8; }
+#lapBtn:hover:not(:disabled) { background-color: #138496; }
+
+.laps-container {
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    border-top: 1px solid #4a4a4a; /* Darker border */
+    padding-top: 20px;
+}
+
+.laps-container h2 {
+    color: #e0e0e0; /* Light color for heading */
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.5em;
+}
+
+#lapList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#lapList li {
+    background-color: #3a3f4c; /* Darker background for lap items */
+    border: 1px solid #4a4a4a; /* Darker border */
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    font-size: 1.1em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #e0e0e0; /* Light text for lap items */
+}
+
+#lapList li:last-child {
+    margin-bottom: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .stopwatch-circle {
+        width: 200px;
+        height: 200px;
+    }
+    .stopwatch-display {
+        font-size: 2.2em;
+    }
+    button {
+        padding: 10px 20px;
+        font-size: 1em;
+        min-width: 80px;
+    }
+    .controls {
+        gap: 10px;
+    }
+}

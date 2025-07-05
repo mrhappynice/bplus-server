@@ -1,0 +1,254 @@
+Below are the complete files for the app named **`asas`**.
+
+--- START OF FILE apps/asas/routes.js ---
+const express = require('express');
+const router = express.Router();
+
+// Pre-written prompts and simulated AI responses
+const aiResponses = [
+    { trigger: "hello", reply: "Hello there! How can I assist you today?" },
+    { trigger: "hi", reply: "Hi! It's great to chat with you." },
+    { trigger: "how are you", reply: "I'm just a program, so I don't have feelings, but I'm functioning perfectly! How about you?" },
+    { trigger: "name", reply: "I am ASAS, your Artificial Simulated Assistant." },
+    { trigger: "creator", reply: "I was created by a developer who wanted a fun little chat app." },
+    { trigger: "weather", reply: "I cannot access real-time weather data, but I can tell you it's always sunny in my virtual world!" },
+    { trigger: "joke", reply: "Why don't scientists trust atoms? Because they make up everything!" },
+    { trigger: "help", reply: "I can simulate basic conversation. Try asking me about my name, or tell me 'hello'!" },
+    { trigger: "bye", reply: "Goodbye! It was nice chatting with you." },
+    { trigger: "goodbye", reply: "Farewell! Hope to chat again soon." },
+    { trigger: "default", reply: "I'm not sure how to respond to that. Could you try rephrasing or ask something simpler?" }
+];
+
+// POST endpoint for chat messages
+router.post('/chat', (req, res) => {
+    const userMessage = req.body.message ? req.body.message.toLowerCase() : '';
+    let aiReply = aiResponses.find(response => userMessage.includes(response.trigger));
+
+    if (!aiReply) {
+        aiReply = aiResponses.find(response => response.trigger === "default");
+    }
+
+    // Simulate a typing delay
+    setTimeout(() => {
+        res.json({ reply: aiReply.reply });
+    }, Math.floor(Math.random() * 800) + 400); // Delay between 400ms and 1200ms
+});
+
+module.exports = router;
+--- END OF FILE apps/asas/routes.js ---
+
+--- START OF FILE apps/asas/public/index.html ---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASAS - Fake AI Chat</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <h1>ASAS: Artificial Simulated Assistant</h1>
+        <div id="chat-messages">
+            <!-- Messages will be appended here by JavaScript -->
+        </div>
+        <div id="chat-input-container">
+            <input type="text" id="user-input" placeholder="Type your message...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+    <script src="script.js" defer></script>
+</body>
+</html>
+--- END OF FILE apps/asas/public/index.html ---
+
+--- START OF FILE apps/asas/public/script.js ---
+document.addEventListener('DOMContentLoaded', () => {
+    const chatMessages = document.getElementById('chat-messages');
+    const userInput = document.getElementById('user-input');
+    const sendButton = document.getElementById('send-button');
+
+    // Function to append messages to the chat window
+    function appendMessage(sender, text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', `sender-${sender}`);
+        messageDiv.textContent = text;
+        chatMessages.appendChild(messageDiv);
+        // Scroll to the bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Function to send a message
+    async function sendMessage() {
+        const message = userInput.value.trim();
+        if (!message) return;
+
+        appendMessage('user', message);
+        userInput.value = ''; // Clear input field
+
+        try {
+            const response = await fetch('/api/asas/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: message })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            appendMessage('ai', data.reply);
+        } catch (error) {
+            console.error('Error sending message:', error);
+            appendMessage('ai', 'Oops! My circuits are down. Please try again later.');
+        }
+    }
+
+    // Event listeners
+    sendButton.addEventListener('click', sendMessage);
+    userInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    // Initial message from the AI
+    appendMessage('ai', 'Hello! I am ASAS, your Artificial Simulated Assistant. How can I help you today?');
+});
+--- END OF FILE apps/asas/public/script.js ---
+
+--- START OF FILE apps/asas/public/style.css ---
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    color: #333;
+}
+
+#app {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+    color: #007bff;
+    margin-bottom: 20px;
+    font-size: 1.8em;
+}
+
+#chat-messages {
+    flex-grow: 1;
+    height: 400px; /* Fixed height for chat window */
+    overflow-y: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: #f9f9f9;
+    scroll-behavior: smooth; /* Smooth scrolling */
+}
+
+.message {
+    padding: 10px 15px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    max-width: 80%;
+    word-wrap: break-word;
+    line-height: 1.4;
+}
+
+.sender-user {
+    background-color: #007bff;
+    color: white;
+    align-self: flex-end;
+    margin-left: auto; /* Pushes message to the right */
+    border-bottom-right-radius: 5px;
+}
+
+.sender-ai {
+    background-color: #e2e6ea;
+    color: #333;
+    align-self: flex-start;
+    margin-right: auto; /* Pushes message to the left */
+    border-bottom-left-radius: 5px;
+}
+
+#chat-input-container {
+    display: flex;
+    gap: 10px;
+}
+
+#user-input {
+    flex-grow: 1;
+    padding: 12px 15px;
+    border: 1px solid #ccc;
+    border-radius: 25px;
+    font-size: 1em;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+#user-input:focus {
+    border-color: #007bff;
+}
+
+#send-button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s, transform 0.1s;
+    outline: none;
+}
+
+#send-button:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+}
+
+#send-button:active {
+    background-color: #1e7e34;
+    transform: translateY(0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #app {
+        width: 95%;
+        margin: 20px auto;
+        padding: 15px;
+    }
+
+    h1 {
+        font-size: 1.5em;
+    }
+
+    #chat-messages {
+        height: 350px;
+        padding: 10px;
+    }
+
+    #user-input, #send-button {
+        padding: 10px 15px;
+        font-size: 0.9em;
+    }
+}
+--- END OF FILE apps/asas/public/style.css ---

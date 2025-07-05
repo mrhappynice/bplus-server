@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mdChat</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+</head>
+<body>
+        <nav class="app-navbar">
+        <div class="app-nav-container">
+            <a href="/" class="app-logo">← Home</a>
+            <ul class="app-nav-links">
+                <li><a href="/pic-chat">Visual Gallery</a></li>
+                <li><a href="/app-builder" target="_blank" style="color: #c0392b;">App Builder</a></li> <!-- NEW LINK -->
+                <li><a href="/app-manager" target="_blank" style="color: #f39c12;">App Manager</a></li>
+                <!-- Add other key links if desired -->
+            </ul>
+        </div>
+    </nav>
+    <div class="container">
+        <h1>Q&A</h1>
+        <div class="main-content">
+            <div class="documents-section">
+                <h2>Stored Documents</h2>
+                <div class="controls">
+                    <button id="upload-btn">Upload Markdown</button>
+                    <input type="file" id="file-upload" accept=".md" hidden>
+                    <button id="transcribe-btn" class="action-btn-neutral">Transcribe Only</button>
+                    <button id="add-to-query-btn">Add Context</button>
+                    <button id="remove-context-btn">Remove Context</button>
+                    <button id="new-chat-btn">New Chat</button>
+                    <button id="clear-selection-btn">Clear Selections</button>
+                    <!-- NEW: Settings Button -->
+                    <button id="settings-btn" class="settings-btn-style">⚙️ Settings</button>
+                </div>
+                <div id="thumbnail-grid"></div>
+                <div id="preview-section" class="preview-section">
+                    <div class="preview-header">
+                        <h3>Document Preview</h3>
+                        <button id="toggle-preview-size-btn">Enlarge View</button>
+                    </div>
+                    <div id="preview-panel"><p>Click a thumbnail to see a preview.</p></div>
+                </div>
+            </div>
+
+            <div id="master-list-section" class="master-list-section">
+                <div class="master-list-header">
+                    <h2>Master List</h2>
+                    <div class="header-buttons">
+                        <button id="edit-master-list-btn">Edit</button>
+                        <button id="toggle-master-list-size-btn">Enlarge View</button>
+                    </div>
+                </div>
+                <div id="master-list-display" class="markdown-view">
+                    <p>Loading list from your browser...</p>
+                </div>
+                <textarea id="master-list-editor" class="markdown-editor" hidden></textarea>
+                <div id="master-list-edit-controls" hidden>
+                    <button id="save-master-list-btn">Save Changes</button>
+                    <button id="cancel-edit-master-list-btn">Cancel</button>
+                </div>
+            </div>
+
+            <div class="chat-section">
+                <h2>Chat with your Documents</h2>
+                <div id="chat-panel"></div>
+                <div id="context-status"></div>
+                <div class="chat-controls">
+                    <div class="thinking-toggle-container">
+                        <span>Think</span>
+                        <label class="switch">
+                            <input type="checkbox" id="thinking-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <div id="status-indicator" class="status-idle">Idle</div>
+                    <textarea id="chat-input" placeholder="Type or hold 🎤 to talk..."></textarea>
+                    <button id="send-btn">Send</button>
+                    <button id="chat-record-btn">🎤</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transcription Panel (Unchanged) -->
+    <div id="transcription-panel" class="slide-panel panel-closed">
+        <div class="panel-header">
+            <h2>Transcription Tool</h2>
+            <button id="close-transcription-panel-btn" title="Close Panel">&times;</button>
+        </div>
+        <div class="panel-content">
+            <p>Press and hold the button to record. Release to transcribe.</p>
+            <div class="panel-controls">
+                <button id="panel-record-btn">🎤</button>
+                <span id="panel-status">Idle</span>
+            </div>
+            <textarea id="transcription-output" rows="15" placeholder="Transcription will appear here..." readonly></textarea>
+            <button id="copy-transcription-btn" class="panel-copy-btn">Copy Text</button>
+        </div>
+    </div>
+
+    <!-- NEW: Settings Panel -->
+    <div id="settings-panel" class="slide-panel panel-closed">
+        <div class="panel-header">
+            <h2>Settings</h2>
+            <button id="close-settings-panel-btn" title="Close Panel">&times;</button>
+        </div>
+        <div class="panel-content">
+            <div class="settings-section">
+                <h3>LLM Provider</h3>
+                <label><input type="radio" name="llmProvider" value="gemini" checked> Google Gemini</label>
+                <label><input type="radio" name="llmProvider" value="local"> Local (LM Studio)</label>
+            </div>
+
+            <div class="settings-section" id="gemini-settings-section">
+                <label for="gemini-model-select">Gemini Model</label>
+                <select id="gemini-model-select">
+                    <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                    <option value="gemini-pro">Gemini</option>
+                </select>
+            </div>
+
+            <div class="settings-section" id="local-llm-settings-section" style="display: none;">
+                <label for="local-model-select">Local Model</label>
+                <div class="local-model-controls">
+                    <select id="local-model-select">
+                        <option>Click Refresh to load models...</option>
+                    </select>
+                    <button id="refresh-models-btn" title="Refresh Local Models">🔄</button>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="settings-section">
+                <h3>Speech Services (STT/TTS)</h3>
+                <label><input type="radio" name="speechProvider" value="browser" checked> Browser Web Speech API</label>
+                <label><input type="radio" name="speechProvider" value="local"> Local (Whisper/Piper)</label>
+                <small>Local requires Whisper & Piper servers to be running.</small>
+            </div>
+
+            <button id="save-settings-btn" class="panel-copy-btn">Save and Apply</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,1315 @@
+Below are the complete files for the app named **`gen-studio-testing`**.
+
+--- START OF FILE apps/gen-studio-testing/routes.js ---
+
+// apps/gen-studio-testing/routes.js
+require('dotenv').config({ path: '../../.env' });
+const express = require('express');
+const fs = require('fs/promises');
+const path = require('path');
+const axios = require('axios');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+const router = express.Router();
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const LM_STUDIO_URL = 'http://localhost:1234/v1/chat/completions';
+const LM_STUDIO_MODELS_URL = 'http://localhost:1234/v1/models';
+const APPS_DIR = path.join(__dirname, '..');
+const PROTECTED_APPS = ['app-builder', 'app-manager', 'md-chat', 'pic-chat', 'gen-studio'];
+
+function parseAiResponse(aiResponse) {
+    const files = { routes: '', html: '', script: '', style: '' };
+    const fileMappings = { 'routes.js': 'routes', 'index.html': 'html', 'script.js': 'script', 'style.css': 'style' };
+    const regex = /--- START OF FILE apps\/[a-zA-Z0-9_-]+\/(public\/)?(routes\.js|index\.html|script\.js|style\.css) ---\n([\s\S]*?)\n--- END OF FILE/g;
+    let match;
+    while ((match = regex.exec(aiResponse)) !== null) {
+        const fileName = match[2];
+        const fileKey = fileMappings[fileName];
+        if (fileKey) { files[fileKey] = match[3].trim(); }
+    }
+    return files;
+}
+
+router.get('/apps', async (req, res) => {
+    try {
+        const entries = await fs.readdir(APPS_DIR, { withFileTypes: true });
+        const appDirs = entries
+            .filter(entry => entry.isDirectory() && !PROTECTED_APPS.includes(entry.name))
+            .map(entry => entry.name);
+        res.json(appDirs);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to list apps.' });
+    }
+});
+
+router.get('/app/:slug', async (req, res) => {
+    const { slug } = req.params;
+    if (PROTECTED_APPS.includes(slug)) {
+        return res.status(403).json({ error: 'This is a protected app.' });
+    }
+    const appPath = path.join(APPS_DIR, slug);
+    const publicPath = path.join(appPath, 'public');
+    try {
+        const files = {
+            routes: await fs.readFile(path.join(appPath, 'routes.js'), 'utf-8'),
+            html: await fs.readFile(path.join(publicPath, 'index.html'), 'utf-8'),
+            script: await fs.readFile(path.join(publicPath, 'script.js'), 'utf-8'),
+            style: await fs.readFile(path.join(publicPath, 'style.css'), 'utf-8'),
+        };
+        res.json(files);
+    } catch (error) {
+        res.status(500).json({ error: `Failed to read files for app: ${slug}` });
+    }
+});
+
+router.get('/gemini-models', async (req, res) => {
+    try {
+        if (!process.env.GEMINI_API_KEY) {
+            throw new Error("GEMINI_API_KEY is not set.");
+        }
+        const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`;
+        const response = await axios.get(url);
+        const compatibleModels = response.data.models.filter(model => 
+            model.supportedGenerationMethods.includes('generateContent') 
+        );
+        res.json(compatibleModels.map(model => ({
+            name: model.displayName,
+            id: model.name.replace('models/', '')
+        })));
+    } catch (error) {
+        console.error('Failed to fetch Gemini models:', error.message);
+        res.status(500).json({ error: 'Failed to fetch Gemini models.' });
+    }
+});
+
+router.post('/create', async (req, res) => {
+    const { appName, userRequest, provider, model: modelId } = req.body;
+    const appSlug = appName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+    // CORRECTED: Restored the full, detailed prompt.
+    const creationPrompt = `You are an expert full-stack developer specializing in Node.js, Express, and vanilla JavaScript. Your task is to **create** a new self-contained application from scratch.
+
+### System Architecture
+The server hosts multiple "mini-apps." Each app has a simple structure:
+\`\`\`
+apps/
+└── <app-slug>/
+    ├── routes.js
+    └── public/
+        ├── index.html
+        ├── script.js
+        └── style.css
+\`\`\`
+The main server mounts the frontend at \`/<app-slug>\` and the backend at \`/api/<app-slug>\`. Therefore, any \`fetch\` request in \`script.js\` MUST be prefixed with \`/api/${appSlug}\`.
+
+### My Request
+I want to create a new application named **\`${appName}\`** (slug: \`${appSlug}\`). Here is my idea:
+"${userRequest}"
+
+### Output Format
+Generate the complete code for all four standard files. Your response MUST be only the code, formatted exactly as shown below.
+
+--- START OF FILE apps/${appSlug}/routes.js ---
+(Your generated code for routes.js here)
+--- END OF FILE apps/${appSlug}/routes.js ---
+
+--- START OF FILE apps/${appSlug}/public/index.html ---
+(Your generated code for index.html here)
+--- END OF FILE apps/${appSlug}/public/index.html ---
+
+--- START OF FILE apps/${appSlug}/public/script.js ---
+(Your generated code for script.js here)
+--- END OF FILE apps/${appSlug}/public/script.js ---
+
+--- START OF FILE apps/${appSlug}/public/style.css ---
+(Your generated code for style.css here)
+--- END OF FILE apps/${appSlug}/public/style.css ---`;
+
+    try {
+        let aiResponse;
+        if (provider === 'gemini') {
+            const model = genAI.getGenerativeModel({ model: modelId || "gemini-pro" });
+            const result = await model.generateContent(creationPrompt);
+            aiResponse = result.response.text();
+        } else {
+            const payload = { model: modelId, messages: [{ role: "user", content: creationPrompt }], stream: false, max_tokens: 4096 };
+            const lmResponse = await axios.post(LM_STUDIO_URL, payload);
+            aiResponse = lmResponse.data.choices[0].message.content;
+        }
+        const files = parseAiResponse(aiResponse);
+        res.json({ files });
+    } catch (error) {
+        console.error("AI Generation Error:", error.response ? error.response.data : error.message);
+        res.status(500).json({ error: `Failed to get response from AI: ${error.message}` });
+    }
+});
+
+router.post('/mount', async (req, res) => {
+    const { appName, files } = req.body;
+    const appSlug = appName.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const appRootPath = path.join(__dirname, '..', '..');
+    const newAppPath = path.join(appRootPath, 'apps', appSlug);
+    const newAppPublicPath = path.join(newAppPath, 'public');
+    const mainServerPath = path.join(appRootPath, 'server.js');
+
+    try {
+        await fs.access(newAppPath);
+        return res.status(409).json({ error: `App '${appSlug}' already exists.` });
+    } catch (e) { /* App doesn't exist, proceed. */ }
+
+    try {
+        await fs.mkdir(newAppPublicPath, { recursive: true });
+        await fs.writeFile(path.join(newAppPath, 'routes.js'), files.routes);
+        await fs.writeFile(path.join(newAppPublicPath, 'index.html'), files.html);
+        await fs.writeFile(path.join(newAppPublicPath, 'script.js'), files.script);
+        await fs.writeFile(path.join(newAppPublicPath, 'style.css'), files.style);
+        
+        const serverContent = await fs.readFile(mainServerPath, 'utf-8');
+        const injectionMarker = '// {{APP_MOUNT_POINT}}';
+        const newRoutesCode = `
+// --- Routes for ${appSlug} ---
+app.use('/${appSlug}', express.static(path.join(__dirname, 'apps', '${appSlug}', 'public')));
+const ${appSlug.replace(/-/g, '')}Routes = require('./apps/${appSlug}/routes');
+app.use('/api/${appSlug}', ${appSlug.replace(/-/g, '')}Routes);
+`;
+        const newServerContent = serverContent.replace(injectionMarker, `${newRoutesCode}\n${injectionMarker}`);
+        await fs.writeFile(mainServerPath, newServerContent, 'utf-8');
+        res.status(201).json({ message: `App '${appSlug}' created successfully! Nodemon should be restarting the server.` });
+    } catch (error) {
+        res.status(500).json({ error: `Failed to mount app: ${error.message}` });
+    }
+});
+
+router.post('/edit', async (req, res) => {
+    const { appSlug, userRequest, provider, model: modelId } = req.body;
+    try {
+        const appPath = path.join(APPS_DIR, appSlug);
+        const publicPath = path.join(appPath, 'public');
+        const existingFiles = {
+            routes: await fs.readFile(path.join(appPath, 'routes.js'), 'utf-8'),
+            html: await fs.readFile(path.join(publicPath, 'index.html'), 'utf-8'),
+            script: await fs.readFile(path.join(publicPath, 'script.js'), 'utf-8'),
+            style: await fs.readFile(path.join(publicPath, 'style.css'), 'utf-8'),
+        };
+
+        // CORRECTED: Restored the full, detailed prompt.
+        const editPrompt = `You are an expert full-stack developer. Your task is to **modify** an existing self-contained application.
+
+### My Request
+For the app named **\`${appSlug}\`**, I want to make the following changes:
+"${userRequest}"
+
+### Provided Files
+Here are the complete current files for the app. Modify them according to my request.
+
+--- START OF FILE apps/${appSlug}/routes.js ---
+${existingFiles.routes}
+--- END OF FILE apps/${appSlug}/routes.js ---
+
+--- START OF FILE apps/${appSlug}/public/index.html ---
+${existingFiles.html}
+--- END OF FILE apps/${appSlug}/public/index.html ---
+
+--- START OF FILE apps/${appSlug}/public/script.js ---
+${existingFiles.script}
+--- END OF FILE apps/${appSlug}/public/script.js ---
+
+--- START OF FILE apps/${appSlug}/public/style.css ---
+${existingFiles.style}
+--- END OF FILE apps/${appSlug}/public/style.css ---
+
+### Output Format
+Your response MUST be only the complete, modified files, formatted exactly as shown in the "Provided Files" section. If a file is unchanged, include it as-is.`;
+        
+        let aiResponse;
+        if (provider === 'gemini') {
+            const model = genAI.getGenerativeModel({ model: modelId || "gemini-pro" });
+            const result = await model.generateContent(editPrompt);
+            aiResponse = result.response.text();
+        } else {
+            const payload = { model: modelId, messages: [{ role: "user", content: editPrompt }], stream: false, max_tokens: 4096 };
+            const lmResponse = await axios.post(LM_STUDIO_URL, payload);
+            aiResponse = lmResponse.data.choices[0].message.content;
+        }
+        const files = parseAiResponse(aiResponse);
+        res.json({ files });
+    } catch (error) {
+        console.error("AI Edit Error:", error.response ? error.response.data : error.message);
+        res.status(500).json({ error: `Failed to get response from AI: ${error.message}` });
+    }
+});
+
+router.put('/save', async (req, res) => {
+    const { appSlug, files } = req.body;
+    if (PROTECTED_APPS.includes(appSlug)) {
+        return res.status(403).json({ error: 'This is a protected app and cannot be edited.' });
+    }
+    const appPath = path.join(APPS_DIR, appSlug);
+    const publicPath = path.join(appPath, 'public');
+    try {
+        await fs.writeFile(path.join(appPath, 'routes.js'), files.routes);
+        await fs.writeFile(path.join(publicPath, 'index.html'), files.html);
+        await fs.writeFile(path.join(publicPath, 'script.js'), files.script);
+        await fs.writeFile(path.join(publicPath, 'style.css'), files.style);
+        res.json({ message: `App '${appSlug}' updated successfully.` });
+    } catch (error) {
+        res.status(500).json({ error: `Failed to update app: ${appSlug}` });
+    }
+});
+
+router.get('/local-models', async (req, res) => {
+    try {
+        const response = await axios.get(LM_STUDIO_MODELS_URL);
+        res.json(response.data.data);
+    } catch (error) {
+        if (error.code === 'ECONNREFUSED') {
+            return res.status(500).json({ error: 'Connection to LM Studio failed.' });
+        }
+        res.status(500).json({ error: 'Failed to get models from LM Studio.' });
+    }
+});
+
+module.exports = router;
+
+--- END OF FILE apps/gen-studio-testing/routes.js ---
+
+--- START OF FILE apps/gen-studio-testing/public/index.html ---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gen Studio</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="app-navbar">
+        <div class="app-nav-container">
+            <a href="/" class="app-logo">← Home</a>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="header">
+            <h1>Gen Studio</h1>
+            <p class="subtitle">Create and edit applications with the help of AI.</p>
+            <button id="settings-btn" class="settings-btn-style">⚙️ Settings</button>
+        </div>
+
+        <div id="status-message" class="status-hidden"></div>
+
+        <div class="tabs">
+            <button class="tab-link active" data-tab="creator">Create App</button>
+            <button class="tab-link" data-tab="editor">Edit App</button>
+        </div>
+
+        <!-- App Creator Tab -->
+        <div id="creator" class="tab-content active">
+            <div class="io-grid">
+                <div class="input-panel">
+                    <h3>1. Describe Your App</h3>
+                    <form id="create-form">
+                        <div class="form-group">
+                            <label for="appName">New App Name</label>
+                            <input type="text" id="appName" placeholder="e.g., Simple Poll App" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="createRequest">AI Prompt</label>
+                            <div class="input-wrapper">
+                                <textarea id="createRequest" rows="8" placeholder="Describe the app you want to build... e.g., 'A simple to-do list app where I can add items and see them in a list.'"></textarea>
+                                <button type="button" id="create-mic-btn" class="mic-btn" title="Hold to talk">🎤</button>
+                            </div>
+                        </div>
+                        <button type="submit" id="generate-app-btn">Generate Code</button>
+                    </form>
+                </div>
+                <div class="output-panel">
+                    <h3>2. Review Generated Code</h3>
+                    <div class="code-viewer">
+                        <div class="file-tabs">
+                            <button class="file-tab-link active" data-file="routes">routes.js</button>
+                            <button class="file-tab-link" data-file="html">index.html</button>
+                            <button class="file-tab-link" data-file="script">script.js</button>
+                            <button class="file-tab-link" data-file="style">style.css</button>
+                        </div>
+                        <div id="create-code-display">
+                            <pre id="create-routes-display" class="code-content active" data-file="routes"><code>// AI-generated routes.js will appear here...</code></pre>
+                            <pre id="create-html-display" class="code-content" data-file="html"><code><!-- AI-generated index.html will appear here... --></code></pre>
+                            <pre id="create-script-display" class="code-content" data-file="script"><code>// AI-generated script.js will appear here...</code></pre>
+                            <pre id="create-style-display" class="code-content" data-file="style"><code>/* AI-generated style.css will appear here... */</code></pre>
+                        </div>
+                    </div>
+                    <button id="mount-app-btn" disabled>Create and Mount App</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- App Editor Tab -->
+        <div id="editor" class="tab-content">
+             <div class="io-grid">
+                <div class="input-panel">
+                    <h3>1. Select App & Describe Changes</h3>
+                    <form id="edit-form">
+                        <div class="form-group">
+                            <label for="appSelector">Select an App to Edit</label>
+                            <select id="appSelector" required>
+                                <option value="">-- Loading Apps --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editRequest">AI Prompt</label>
+                             <div class="input-wrapper">
+                                <textarea id="editRequest" rows="8" placeholder="Describe the changes you want to make... e.g., 'Change the h1 title to blue and add a button that alerts hello.'"></textarea>
+                                <button type="button" id="edit-mic-btn" class="mic-btn" title="Hold to talk">🎤</button>
+                            </div>
+                        </div>
+                        <button type="submit" id="generate-edit-btn">Generate Edits</button>
+                    </form>
+                </div>
+                <div class="output-panel">
+                    <h3>2. Review Edited Code</h3>
+                    <div class="code-viewer">
+                        <div class="file-tabs" id="editor-file-tabs">
+                            <!-- Dynamically populated -->
+                        </div>
+                        <div id="editor-code-display">
+                            <div class="placeholder-text">
+                                <p>Generate edits to see a comparison here.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="save-changes-btn" disabled>Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="settings-panel" class="slide-panel panel-closed">
+        <div class="panel-header">
+            <h2>Settings</h2>
+            <button id="close-settings-panel-btn" title="Close Panel">×</button>
+        </div>
+        <div class="panel-content">
+            <div class="settings-section">
+                <h3>LLM Provider</h3>
+                <label><input type="radio" name="llmProvider" value="gemini" checked> Google Gemini</label>
+                <label><input type="radio" name="llmProvider" value="local"> Local (LM Studio)</label>
+            </div>
+            
+            <!-- NEW: Gemini Settings -->
+            <div class="settings-section" id="gemini-settings-section">
+                <label for="gemini-model-select">Gemini Model</label>
+                <select id="gemini-model-select">
+                    <option>Loading Gemini models...</option>
+                </select>
+            </div>
+
+            <div class="settings-section" id="local-llm-settings-section" style="display: none;">
+                <label for="local-model-select">Local Model</label>
+                <div class="local-model-controls">
+                    <select id="local-model-select">
+                        <option>Click Refresh to load models...</option>
+                    </select>
+                    <button id="refresh-models-btn" title="Refresh Local Models">🔄</button>
+                </div>
+            </div>
+            <hr>
+            <div class="settings-section">
+                <h3>Speech Services (STT)</h3>
+                <label><input type="radio" name="speechProvider" value="browser" checked> Browser Web Speech API</label>
+                <label><input type="radio" name="speechProvider" value="local"> Local (Whisper)</label>
+                <small>Local requires Whisper server to be running.</small>
+            </div>
+            <button id="save-settings-btn" class="panel-copy-btn">Save and Apply</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+--- END OF FILE apps/gen-studio-testing/public/index.html ---
+
+--- START OF FILE apps/gen-studio-testing/public/script.js ---
+document.addEventListener('DOMContentLoaded', () => {
+    // --- WebSocket Setup ---
+    const WS_URL = `ws://${window.location.host}`;
+    const ws = new WebSocket(WS_URL);
+    ws.onopen = () => console.log('WebSocket connection established.');
+    ws.onerror = (err) => console.error('WebSocket Error:', err);
+    ws.onclose = () => console.log('WebSocket connection closed.');
+
+    // --- Element Selectors ---
+    const statusDiv = document.getElementById('status-message');
+    const tabs = document.querySelectorAll('.tab-link');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    // Creator Elements
+    const createForm = document.getElementById('create-form');
+    const appNameInput = document.getElementById('appName');
+    const createRequestInput = document.getElementById('createRequest');
+    const generateAppBtn = document.getElementById('generate-app-btn');
+    const mountAppBtn = document.getElementById('mount-app-btn');
+    const createMicBtn = document.getElementById('create-mic-btn');
+    const createFileTabs = document.querySelectorAll('#creator .file-tab-link');
+    const createCodeDisplays = document.querySelectorAll('#creator .code-content');
+
+    // Editor Elements
+    const editForm = document.getElementById('edit-form');
+    const appSelector = document.getElementById('appSelector');
+    const editRequestInput = document.getElementById('editRequest');
+    const generateEditBtn = document.getElementById('generate-edit-btn');
+    const saveChangesBtn = document.getElementById('save-changes-btn');
+    const editMicBtn = document.getElementById('edit-mic-btn');
+    const editorFileTabs = document.getElementById('editor-file-tabs');
+    const editorCodeDisplay = document.getElementById('editor-code-display');
+
+    // Settings Panel
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsPanel = document.getElementById('settings-panel');
+    const closeSettingsPanelBtn = document.getElementById('close-settings-panel-btn');
+    const saveSettingsBtn = document.getElementById('save-settings-btn');
+    const refreshModelsBtn = document.getElementById('refresh-models-btn');
+    const localModelSelect = document.getElementById('local-model-select');
+    const geminiModelSelect = document.getElementById('gemini-model-select'); // New selector
+    const llmProviderRadios = document.querySelectorAll('input[name="llmProvider"]');
+    const speechProviderRadios = document.querySelectorAll('input[name="speechProvider"]');
+
+    // --- State ---
+    let settings = {};
+    let generatedFiles = {};
+    let currentEditorFiles = {};
+    let editedFiles = {};
+    let isRecording = false;
+    let mediaRecorder;
+    let audioChunks = [];
+    let browserRecognition;
+    let activeRecordingInput = null;
+
+    // --- API Helper ---
+    const api = {
+        post: async (endpoint, body) => {
+            const response = await fetch(`/api/gen-studio${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.error || 'An unknown error occurred.');
+            }
+            return result;
+        }
+    };
+
+    // --- Settings Logic ---
+    function initializeSettings() {
+        const savedSettings = JSON.parse(localStorage.getItem('genStudioSettings'));
+        settings = {
+            llmProvider: 'gemini',
+            geminiModel: 'gemini-pro', // Default value
+            localModel: '',
+            speechProvider: 'browser',
+            ...savedSettings
+        };
+
+        document.querySelector(`input[name="llmProvider"][value="${settings.llmProvider}"]`).checked = true;
+        document.querySelector(`input[name="speechProvider"][value="${settings.speechProvider}"]`).checked = true;
+
+        if (settings.localModel) {
+            let option = localModelSelect.querySelector(`option[value="${settings.localModel}"]`);
+            if (!option) {
+                option = new Option(settings.localModel, settings.localModel, true, true);
+                localModelSelect.add(option);
+            }
+            localModelSelect.value = settings.localModel;
+        }
+        
+        // This will be populated by fetchGeminiModels, but set the value if it exists
+        geminiModelSelect.value = settings.geminiModel;
+
+
+        settingsBtn.addEventListener('click', () => settingsPanel.classList.remove('panel-closed'));
+        closeSettingsPanelBtn.addEventListener('click', () => settingsPanel.classList.add('panel-closed'));
+        saveSettingsBtn.addEventListener('click', saveAndApplySettings);
+        refreshModelsBtn.addEventListener('click', fetchLocalModels);
+        llmProviderRadios.forEach(radio => radio.addEventListener('change', toggleProviderSections));
+
+        toggleProviderSections();
+        fetchLocalModels();
+        fetchGeminiModels(); // Fetch Gemini models on init
+        applySettings();
+    }
+
+    function toggleProviderSections() {
+        const selectedProvider = document.querySelector('input[name="llmProvider"]:checked').value;
+        document.getElementById('gemini-settings-section').style.display = selectedProvider === 'gemini' ? 'block' : 'none';
+        document.getElementById('local-llm-settings-section').style.display = selectedProvider === 'local' ? 'block' : 'none';
+    }
+
+    async function fetchGeminiModels() {
+        try {
+            geminiModelSelect.innerHTML = '<option>Fetching...</option>';
+            const response = await fetch(`/api/gen-studio/gemini-models`);
+            if (!response.ok) throw new Error('Failed to fetch Gemini models from server.');
+            const models = await response.json();
+            geminiModelSelect.innerHTML = '';
+            models.forEach(model => {
+                const option = new Option(model.name, model.id);
+                geminiModelSelect.add(option);
+            });
+            // Restore saved selection
+            if (settings.geminiModel && geminiModelSelect.querySelector(`option[value="${settings.geminiModel}"]`)) {
+                geminiModelSelect.value = settings.geminiModel;
+            }
+        } catch (error) {
+            console.error('Error fetching Gemini models:', error);
+            geminiModelSelect.innerHTML = `<option>${error.message}</option>`;
+        }
+    }
+
+    async function fetchLocalModels() {
+        try {
+            localModelSelect.innerHTML = '<option>Fetching...</option>';
+            const response = await fetch(`/api/gen-studio/local-models`);
+            if (!response.ok) throw new Error('Failed to fetch models');
+            const models = await response.json();
+            localModelSelect.innerHTML = '';
+            models.forEach(model => {
+                const option = new Option(model.id, model.id);
+                localModelSelect.add(option);
+            });
+            if (settings.localModel && localModelSelect.querySelector(`option[value="${settings.localModel}"]`)) {
+                localModelSelect.value = settings.localModel;
+            }
+        } catch (error) {
+            console.error('Error fetching local models:', error);
+            localModelSelect.innerHTML = `<option>${error.message}</option>`;
+        }
+    }
+
+    function saveAndApplySettings() {
+        settings.llmProvider = document.querySelector('input[name="llmProvider"]:checked').value;
+        settings.speechProvider = document.querySelector('input[name="speechProvider"]:checked').value;
+        settings.geminiModel = geminiModelSelect.value;
+        settings.localModel = localModelSelect.value;
+        localStorage.setItem('genStudioSettings', JSON.stringify(settings));
+        alert('Settings saved!');
+        settingsPanel.classList.add('panel-closed');
+        applySettings();
+    }
+
+    function applySettings() {
+        if (browserRecognition) browserRecognition.abort();
+        if (mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
+
+        if (settings.speechProvider === 'browser') {
+            setupBrowserRecognition();
+        } else {
+            browserRecognition = null;
+        }
+    }
+
+    // --- Speech Recognition (STT) Logic ---
+    function setupBrowserRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            console.warn("Browser Speech Recognition not supported.");
+            return;
+        }
+        browserRecognition = new SpeechRecognition();
+        browserRecognition.continuous = false;
+        browserRecognition.interimResults = false;
+        browserRecognition.lang = 'en-US';
+
+        browserRecognition.onresult = (event) => {
+            const transcript = event.results[event.results.length - 1][0].transcript.trim();
+            if (activeRecordingInput) {
+                activeRecordingInput.value = transcript;
+            }
+        };
+        browserRecognition.onerror = (event) => console.error('Browser speech recognition error', event.error);
+        browserRecognition.onend = () => {
+            if (!isRecording) return;
+            isRecording = false;
+            createMicBtn.classList.remove('recording');
+            editMicBtn.classList.remove('recording');
+        };
+    }
+
+    const startRecording = async (targetInput, micButton) => {
+        if (isRecording) return;
+        isRecording = true;
+        activeRecordingInput = targetInput;
+        micButton.classList.add('recording');
+
+        if (settings.speechProvider === 'browser' && browserRecognition) {
+            browserRecognition.start();
+        } else { // Local STT
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    if (audioBlob.size > 100) {
+                        ws.send(JSON.stringify({ type: 'audio_config', purpose: 'llm' }));
+                        ws.send(audioBlob);
+                    }
+                    audioChunks = [];
+                };
+                audioChunks = [];
+                mediaRecorder.start();
+            } catch (err) {
+                console.error('Error accessing microphone for local STT:', err);
+                isRecording = false;
+                micButton.classList.remove('recording');
+                alert('Could not access microphone.');
+            }
+        }
+    };
+
+    const stopRecording = (micButton) => {
+        if (!isRecording) return;
+        if (settings.speechProvider === 'browser' && browserRecognition) {
+            browserRecognition.stop();
+        } else if (mediaRecorder) {
+            mediaRecorder.stop();
+        }
+        isRecording = false;
+        micButton.classList.remove('recording');
+    };
+    
+    ws.onmessage = async (event) => {
+        const message = JSON.parse(event.data);
+        switch (message.type) {
+            case 'llm_transcription_result':
+                if (activeRecordingInput) {
+                    activeRecordingInput.value = message.text;
+                }
+                break;
+            case 'error':
+                setStatus('error', `Server Error: ${message.data}`);
+                break;
+        }
+    };
+
+    // --- Tab Switching Logic ---
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            tabContents.forEach(content => {
+                content.classList.toggle('active', content.id === tab.dataset.tab);
+            });
+        });
+    });
+
+    // --- App Creator Logic ---
+    createForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const appName = appNameInput.value.trim();
+        const userRequest = createRequestInput.value.trim();
+        if (!appName || !userRequest) {
+            setStatus('error', 'App Name and AI Prompt are required.');
+            return;
+        }
+
+        generateAppBtn.disabled = true;
+        mountAppBtn.disabled = true;
+        setStatus('working', 'Generating code with AI... This may take a moment.');
+
+        try {
+            const body = {
+                appName,
+                userRequest,
+                provider: settings.llmProvider,
+                model: settings.llmProvider === 'gemini' ? settings.geminiModel : settings.localModel
+            };
+            const result = await api.post('/create', body);
+            generatedFiles = result.files;
+            displayGeneratedFiles(generatedFiles);
+            mountAppBtn.disabled = false;
+            setStatus('success', 'Code generated successfully. Review the files and click "Create and Mount App".');
+        } catch (error) {
+            setStatus('error', `Error generating code: ${error.message}`);
+        } finally {
+            generateAppBtn.disabled = false;
+        }
+    });
+
+    // --- Diff Generator ---
+    function simpleDiff(oldStr, newStr) {
+        const oldLines = oldStr.split('\n');
+        const newLines = newStr.split('\n');
+        const M = oldLines.length;
+        const N = newLines.length;
+        const lcsTable = Array(M + 1).fill(null).map(() => Array(N + 1).fill(0));
+        for (let i = 1; i <= M; i++) {
+            for (let j = 1; j <= N; j++) {
+                if (oldLines[i - 1] === newLines[j - 1]) {
+                    lcsTable[i][j] = 1 + lcsTable[i - 1][j - 1];
+                } else {
+                    lcsTable[i][j] = Math.max(lcsTable[i - 1][j], lcsTable[i][j - 1]);
+                }
+            }
+        }
+        let i = M, j = N;
+        const diff = [];
+        while (i > 0 || j > 0) {
+            if (i > 0 && j > 0 && oldLines[i - 1] === newLines[j - 1]) {
+                diff.unshift({ type: 'unchanged', line: oldLines[i - 1] }); i--; j--;
+            } else if (j > 0 && (i === 0 || lcsTable[i][j - 1] >= lcsTable[i - 1][j])) {
+                diff.unshift({ type: 'added', line: newLines[j - 1] }); j--;
+            } else if (i > 0 && (j === 0 || lcsTable[i][j - 1] < lcsTable[i - 1][j])) {
+                diff.unshift({ type: 'removed', line: oldLines[i - 1] }); i--;
+            } else { break; }
+        }
+        let html = '';
+        diff.forEach(item => {
+            const escapedLine = item.line.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>') || ' ';
+            const sign = item.type === 'added' ? '+' : item.type === 'removed' ? '-' : ' ';
+            html += `<div class="diff-line diff-${item.type}"><span class="sign">${sign}</span>${escapedLine}</div>`;
+        });
+        return `<pre><code>${html}</code></pre>`;
+    }
+    
+    // --- App Editor Logic ---
+    editForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const appSlug = appSelector.value;
+        const userRequest = editRequestInput.value.trim();
+
+        if(!appSlug || !userRequest) {
+            setStatus('error', 'Please select an app and provide a prompt.');
+            return;
+        }
+        
+        generateEditBtn.disabled = true;
+        saveChangesBtn.disabled = true;
+        setStatus('working', 'Generating edits with AI...');
+
+        try {
+             const body = {
+                appSlug,
+                userRequest,
+                provider: settings.llmProvider,
+                model: settings.llmProvider === 'gemini' ? settings.geminiModel : settings.localModel
+            };
+            const result = await api.post('/edit', body);
+            editedFiles = result.files; // Store the new files
+            displayEditedFiles(currentEditorFiles, editedFiles);
+
+            saveChangesBtn.disabled = false;
+            setStatus('success', 'Edits generated. Review the code and click "Save Changes".');
+        } catch(error) {
+            setStatus('error', `Error generating edits: ${error.message}`);
+        } finally {
+            generateEditBtn.disabled = false;
+        }
+    });
+    
+    // --- Other Listeners and Functions ---
+    createFileTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            createFileTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            createCodeDisplays.forEach(display => {
+                display.classList.toggle('active', display.dataset.file === tab.dataset.file);
+            });
+        });
+    });
+    
+    function displayEditedFiles(original, edited) {
+        editorFileTabs.innerHTML = '';
+        editorCodeDisplay.innerHTML = '';
+        const fileKeys = { routes: 'routes.js', html: 'index.html', script: 'script.js', style: 'style.css' };
+
+        Object.keys(fileKeys).forEach((key, index) => {
+            const tab = document.createElement('button');
+            tab.className = `file-tab-link ${index === 0 ? 'active' : ''}`;
+            tab.dataset.file = key;
+            tab.textContent = fileKeys[key];
+            editorFileTabs.appendChild(tab);
+
+            const content = document.createElement('div');
+            content.className = `code-content ${index === 0 ? 'active' : ''}`;
+            content.dataset.file = key;
+            content.innerHTML = simpleDiff(original[key], edited[key]);
+            editorCodeDisplay.appendChild(content);
+        });
+    }
+
+    editorFileTabs.addEventListener('click', (e) => {
+        if (!e.target.matches('.file-tab-link')) return;
+
+        const targetFile = e.target.dataset.file;
+        editorFileTabs.querySelectorAll('.file-tab-link').forEach(t => t.classList.remove('active'));
+        e.target.classList.add('active');
+
+        editorCodeDisplay.querySelectorAll('.code-content').forEach(c => {
+            c.classList.toggle('active', c.dataset.file === targetFile);
+        });
+    });
+
+    function displayGeneratedFiles(files) {
+        document.getElementById('create-routes-display').querySelector('code').textContent = files.routes;
+        document.getElementById('create-html-display').querySelector('code').textContent = files.html;
+        document.getElementById('create-script-display').querySelector('code').textContent = files.script;
+        document.getElementById('create-style-display').querySelector('code').textContent = files.style;
+    }
+
+    mountAppBtn.addEventListener('click', async () => {
+        if (Object.keys(generatedFiles).length < 4 || Object.values(generatedFiles).some(f => !f)) {
+            setStatus('error', 'Not all files were generated correctly. Cannot mount.');
+            return;
+        }
+        mountAppBtn.disabled = true;
+        setStatus('working', 'Creating and mounting the new application...');
+        try {
+            const body = { appName: appNameInput.value, files: generatedFiles };
+            const result = await api.post('/mount', body);
+            setStatus('success', result.message);
+            createForm.reset();
+            generatedFiles = {};
+        } catch (error) {
+            setStatus('error', `Error mounting app: ${error.message}`);
+            mountAppBtn.disabled = false; // Re-enable on failure
+        }
+    });
+
+    async function fetchAppsForEditor() {
+        try {
+            const response = await fetch('/api/gen-studio/apps');
+            if (!response.ok) throw new Error('Failed to load apps.');
+            const apps = await response.json();
+            appSelector.innerHTML = '<option value="">-- Choose an App --</option>';
+            apps.forEach(app => appSelector.add(new Option(app, app)));
+        } catch (error) {
+            appSelector.innerHTML = `<option value="">${error.message}</option>`;
+        }
+    }
+
+    appSelector.addEventListener('change', async (e) => {
+        const slug = e.target.value;
+        clearEditorView();
+        if (!slug) return;
+        
+        setStatus('working', `Loading files for '${slug}'...`);
+        try {
+            const response = await fetch(`/api/gen-studio/app/${slug}`);
+            const files = await response.json();
+            if(!response.ok) throw new Error(files.error);
+            currentEditorFiles = files; // Store original files
+            setStatus('hidden', '');
+        } catch(error) {
+            setStatus('error', error.message);
+            clearEditorView();
+        }
+    });
+
+    saveChangesBtn.addEventListener('click', async () => {
+        const appSlug = appSelector.value;
+        if(!appSlug || Object.keys(editedFiles).length === 0) return;
+
+        saveChangesBtn.disabled = true;
+        setStatus('working', `Saving changes for '${appSlug}'...`);
+        try {
+            const response = await fetch(`/api/gen-studio/save`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ appSlug, files: editedFiles }) // Use the stored edited files
+            });
+            const result = await response.json();
+            if(!response.ok) throw new Error(result.error);
+            setStatus('success', result.message);
+            currentEditorFiles = { ...editedFiles }; // The saved files are now the current files
+        } catch (error) {
+            setStatus('error', `Failed to save: ${error.message}`);
+        } finally {
+            saveChangesBtn.disabled = false;
+        }
+    });
+    
+    function clearEditorView() {
+        currentEditorFiles = {};
+        editedFiles = {};
+        editorFileTabs.innerHTML = '';
+        editorCodeDisplay.innerHTML = `<div class="placeholder-text"><p>Generate edits to see a comparison here.</p></div>`;
+        saveChangesBtn.disabled = true;
+    }
+
+    createMicBtn.addEventListener('mousedown', () => startRecording(createRequestInput, createMicBtn));
+    createMicBtn.addEventListener('mouseup', () => stopRecording(createMicBtn));
+    createMicBtn.addEventListener('mouseleave', () => { if(isRecording) stopRecording(createMicBtn); });
+
+    editMicBtn.addEventListener('mousedown', () => startRecording(editRequestInput, editMicBtn));
+    editMicBtn.addEventListener('mouseup', () => stopRecording(editMicBtn));
+    editMicBtn.addEventListener('mouseleave', () => { if(isRecording) stopRecording(editMicBtn); });
+
+    function setStatus(type, message) {
+        statusDiv.className = `status-${type}`;
+        statusDiv.textContent = message;
+    }
+
+    // --- Initial Load ---
+    initializeSettings();
+    fetchAppsForEditor();
+});
+--- END OF FILE apps/gen-studio-testing/public/script.js ---
+
+--- START OF FILE apps/gen-studio-testing/public/style.css ---
+/* --- Global Styles & Variables --- */
+:root {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #252526;
+    --bg-tertiary: #2d2d2d;
+    --border-color: #3e3e3e;
+    --text-primary: #d4d4d4;
+    --text-secondary: #cccccc;
+    --accent-blue: #569cd6;
+    --accent-green: #6a9955;
+    --accent-red: #d16969;
+    --font-heading: 'Roboto Mono', monospace;
+    --font-body: 'Source Code Pro', monospace;
+    --border-radius: 8px;
+}
+
+body {
+    font-family: var(--font-body);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    margin: 0;
+    font-size: 16px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+h1 {
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* --- Tabs --- */
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tab-link {
+    padding: 10px 20px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    font-family: var(--font-heading);
+    border-bottom: 3px solid transparent;
+}
+
+.tab-link.active {
+    color: var(--accent-blue);
+    border-bottom-color: var(--accent-blue);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* --- Main Layout --- */
+.io-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+}
+
+.input-panel, .output-panel {
+    background-color: var(--bg-tertiary);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+h3 {
+    margin-top: 0;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    color: var(--accent-green);
+}
+
+/* --- Forms & Buttons --- */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    font-weight: bold;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+input[type="text"], select, textarea {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-family: var(--font-heading);
+    font-weight: bold;
+    transition: background-color 0.2s;
+    background-color: var(--accent-blue);
+    color: #fff;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #79b5ec;
+}
+
+button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+
+#mount-app-btn, #save-changes-btn {
+    margin-top: 20px;
+    background-color: var(--accent-green);
+}
+#mount-app-btn:hover, #save-changes-btn:hover {
+    background-color: #82b56d;
+}
+
+.mic-btn {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 1.2rem;
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+.mic-btn:hover {
+    background-color: var(--border-color);
+}
+.mic-btn.recording {
+    background-color: var(--accent-red);
+    color: white;
+}
+
+/* --- Code Display & Editor --- */
+.code-viewer {
+    background-color: var(--bg-primary);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.file-tabs {
+    display: flex;
+    background-color: var(--bg-tertiary);
+}
+
+.file-tab-link {
+    width: auto;
+    background: none;
+    padding: 8px 15px;
+    border-radius: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    border-bottom: 2px solid transparent;
+}
+
+.file-tab-link.active {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border-bottom-color: var(--accent-blue);
+}
+
+.code-content {
+    display: none;
+    margin: 0;
+    max-height: 400px;
+    overflow: auto;
+    padding: 15px;
+    font-size: 0.9rem;
+}
+
+.code-content.active {
+    display: block;
+}
+
+.code-editor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.code-editor-grid .form-group textarea {
+    height: 300px;
+    resize: vertical;
+}
+
+/* --- Diff Viewer Styles --- */
+#editor-code-display .placeholder-text {
+    padding: 40px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+#editor-code-display .code-content {
+    display: none;
+    margin: 0;
+    max-height: 400px;
+    overflow: auto;
+    padding: 15px 0;
+    font-size: 0.9rem;
+}
+
+#editor-code-display .code-content.active {
+    display: block;
+}
+
+.diff-line {
+    padding: 0 1em;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+.diff-added {
+    background-color: rgba(77, 153, 98, 0.2);
+}
+.diff-removed {
+    background-color: rgba(209, 105, 105, 0.2);
+}
+.diff-line .sign {
+    display: inline-block;
+    width: 1.5em;
+    text-align: center;
+    user-select: none;
+    font-weight: bold;
+}
+
+/* Status Message */
+#status-message {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    border: 1px solid;
+    color: var(--bg-primary);
+}
+.status-hidden { display: none; }
+.status-success { background-color: #e8f8f5; color: #1abc9c; border-color: #a3e9d7; }
+.status-error { background-color: #fdedec; color: #e74c3c; border-color: #f5b7b1; }
+.status-working { background-color: #fdf3e6; color: #f39c12; border-color: #fbe2c5; }
+
+/* Settings Panel */
+.settings-btn-style {
+    width: auto;
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+.settings-btn-style:hover { background-color: var(--border-color); }
+
+/* CORRECTED: The base style for the panel should be 'in view'. */
+.slide-panel { 
+    position: fixed; 
+    top: 0; 
+    right: 0; 
+    width: 400px; 
+    height: 100%; 
+    background-color: var(--bg-secondary); 
+    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.25); 
+    z-index: 1000; 
+    display: flex; 
+    flex-direction: column; 
+    transform: translateX(0); /* Panel is 'in' by default */
+    transition: transform 0.3s ease-in-out; 
+}
+/* This class is what hides it */
+.slide-panel.panel-closed { 
+    transform: translateX(100%); 
+}
+
+.panel-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background-color: var(--bg-tertiary); border-bottom: 1px solid var(--border-color); }
+.panel-header h2 { margin: 0; font-size: 1.2rem; border: none; color: var(--text-primary); }
+#close-settings-panel-btn { background: none; border: none; font-size: 2rem; cursor: pointer; color: #888; padding: 0; width: auto; }
+.panel-content { padding: 20px; }
+.settings-section { margin-bottom: 20px; }
+.settings-section h3 { font-size: 1rem; color: var(--text-primary); }
+.settings-section label { display: block; margin-bottom: 10px; }
+.settings-section small { color: var(--text-secondary); font-size: 0.9em; }
+.local-model-controls { display: flex; gap: 10px; }
+.panel-copy-btn { width: 100%; }
+
+/* Simple Nav Bar */
+.app-navbar { background-color: var(--bg-tertiary); padding: 1rem 0; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+.app-nav-container { width: 90%; max-width: 1400px; margin: 0 auto; }
+.app-logo { font-size: 1.1rem; font-weight: bold; color: var(--accent-blue); text-decoration: none; }
+
+@media (max-width: 992px) {
+    .io-grid { grid-template-columns: 1fr; }
+    .code-editor-grid { grid-template-columns: 1fr; }
+}
+--- END OF FILE apps/gen-studio-testing/public/style.css ---

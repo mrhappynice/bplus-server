@@ -1,0 +1,196 @@
+:root {
+    --bg-color: #1a1a1a;
+    --text-color: #e0e0e0;
+    --panel-bg: #2a2a2a;
+    --border-color: #444;
+    --grass-color: #3a5a40;
+    --wall-color: #585858;
+    --player-color: #3a86ff;
+    --npc-color: #ffbe0b;
+    --monster-color: #d90429;
+    --hp-bar-color: #4caf50;
+    --hp-bar-bg: #555;
+    --log-system: #80a4ed;
+    --log-error: #ff7b6b;
+    --tile-size: 64px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    overflow: hidden;
+}
+
+#app-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+header {
+    position: absolute;
+    top: 10px;
+    left: 20px;
+    z-index: 10;
+    text-shadow: 2px 2px 4px #000;
+}
+
+main#game-area {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    perspective: 1200px;
+}
+
+#game-world {
+    transform-style: preserve-3d;
+}
+
+.isometric-grid {
+    position: relative;
+    transform-style: preserve-3d;
+    transform: rotateX(60deg) rotateZ(45deg);
+    transition: transform 0.3s ease;
+}
+
+.tile {
+    position: absolute;
+    width: var(--tile-size);
+    height: var(--tile-size);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.tile.grass { background-color: var(--grass-color); }
+.tile.wall {
+    background-color: var(--wall-color);
+    transform: translateZ(calc(var(--tile-size) / 2));
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.4);
+}
+
+.entity {
+    position: absolute;
+    width: calc(var(--tile-size) / 2);
+    height: calc(var(--tile-size) / 2);
+    border-radius: 50%;
+    transform-origin: center;
+    transform: rotateZ(-45deg) rotateX(-60deg) translateY(-50%);
+    transition: all 0.2s ease-in-out;
+}
+
+.entity::after {
+    content: attr(data-name);
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.entity.player { background-color: var(--player-color); }
+.entity.npc { background-color: var(--npc-color); }
+.entity.monster { background-color: var(--monster-color); }
+
+aside#ui-panel {
+    width: 300px;
+    min-width: 250px;
+    background-color: var(--panel-bg);
+    border-left: 2px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    gap: 1rem;
+}
+
+.ui-box {
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.ui-box h2 {
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+#player-hp {
+    background-color: var(--hp-bar-bg);
+    border-radius: 4px;
+    padding: 4px;
+    text-align: center;
+    position: relative;
+    font-weight: bold;
+    overflow: hidden;
+}
+#player-hp::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    width: var(--hp-percent, 100%);
+    background-color: var(--hp-bar-color);
+    z-index: 0;
+    transition: width 0.3s ease;
+}
+#player-hp {
+    position: relative;
+    z-index: 1;
+}
+
+#log-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#message-log {
+    overflow-y: auto;
+    flex-grow: 1;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+#message-log p {
+    margin-bottom: 0.5em;
+    padding: 0.25em;
+    border-radius: 3px;
+}
+
+#message-log p.error { color: var(--log-error); }
+#message-log p.system { color: var(--log-system); }
+
+#controls p {
+    margin-bottom: 1rem;
+}
+
+#reset-button {
+    width: 100%;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 5px;
+    background-color: var(--monster-color);
+    color: var(--text-color);
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#reset-button:hover {
+    background-color: #b70323;
+}

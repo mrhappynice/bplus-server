@@ -1,0 +1,359 @@
+/* --- Global Styles & Variables --- */
+:root {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #252526;
+    --bg-tertiary: #2d2d2d;
+    --border-color: #3e3e3e;
+    --text-primary: #d4d4d4;
+    --text-secondary: #cccccc;
+    --accent-blue: #569cd6;
+    --accent-green: #6a9955;
+    --accent-red: #d16969;
+    --font-heading: 'Roboto Mono', monospace;
+    --font-body: 'Source Code Pro', monospace;
+    --border-radius: 8px;
+}
+
+body {
+    font-family: var(--font-body);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    margin: 0;
+    font-size: 16px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+h1 {
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* --- Tabs --- */
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tab-link {
+    padding: 10px 20px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    font-family: var(--font-heading);
+    border-bottom: 3px solid transparent;
+}
+
+.tab-link.active {
+    color: var(--accent-blue);
+    border-bottom-color: var(--accent-blue);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* --- Main Layout --- */
+.io-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+}
+
+.input-panel, .output-panel {
+    background-color: var(--bg-tertiary);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+h3 {
+    margin-top: 0;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    color: var(--accent-green);
+}
+
+/* --- Forms & Buttons --- */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    font-weight: bold;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+input[type="text"], select, textarea {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-family: var(--font-heading);
+    font-weight: bold;
+    transition: background-color 0.2s;
+    background-color: var(--accent-blue);
+    color: #fff;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #79b5ec;
+}
+
+button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+
+#mount-app-btn, #save-changes-btn {
+    margin-top: 20px;
+    background-color: var(--accent-green);
+}
+#mount-app-btn:hover, #save-changes-btn:hover {
+    background-color: #82b56d;
+}
+
+.mic-btn {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 1.2rem;
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+.mic-btn:hover {
+    background-color: var(--border-color);
+}
+.mic-btn.recording {
+    background-color: var(--accent-red);
+    color: white;
+}
+
+/* --- Code Display & Editor --- */
+.code-viewer {
+    background-color: var(--bg-primary);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.file-tabs {
+    display: flex;
+    background-color: var(--bg-tertiary);
+}
+
+.file-tab-link {
+    width: auto;
+    background: none;
+    padding: 8px 15px;
+    border-radius: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    border-bottom: 2px solid transparent;
+}
+
+.file-tab-link.active {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border-bottom-color: var(--accent-blue);
+}
+
+.code-content {
+    display: none;
+    margin: 0;
+    max-height: 400px;
+    overflow: auto;
+    padding: 15px;
+    font-size: 0.9rem;
+}
+
+.code-content.active {
+    display: block;
+}
+
+.code-editor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.code-editor-grid .form-group textarea {
+    height: 300px;
+    resize: vertical;
+}
+
+/* --- Diff Viewer Styles --- */
+#editor-code-display .placeholder-text {
+    padding: 40px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+#editor-code-display .code-content {
+    display: none;
+    margin: 0;
+    max-height: 400px;
+    overflow: auto;
+    padding: 15px 0;
+    font-size: 0.9rem;
+}
+
+#editor-code-display .code-content.active {
+    display: block;
+}
+
+.diff-line {
+    padding: 0 1em;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+.diff-added {
+    background-color: rgba(77, 153, 98, 0.2);
+}
+.diff-removed {
+    background-color: rgba(209, 105, 105, 0.2);
+}
+.diff-line .sign {
+    display: inline-block;
+    width: 1.5em;
+    text-align: center;
+    user-select: none;
+    font-weight: bold;
+}
+
+/* Status Message */
+#status-message {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    border: 1px solid;
+    color: var(--bg-primary);
+}
+.status-hidden { display: none; }
+.status-success { background-color: #e8f8f5; color: #1abc9c; border-color: #a3e9d7; }
+.status-error { background-color: #fdedec; color: #e74c3c; border-color: #f5b7b1; }
+.status-working { background-color: #fdf3e6; color: #f39c12; border-color: #fbe2c5; }
+
+.status-success a {
+    color: #148f77; /* A darker green for better contrast */
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+/* Settings Panel */
+.settings-btn-style {
+    width: auto;
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+.settings-btn-style:hover { background-color: var(--border-color); }
+
+/* CORRECTED: The base style for the panel should be 'in view'. */
+.slide-panel { 
+    position: fixed; 
+    top: 0; 
+    right: 0; 
+    width: 400px; 
+    height: 100%; 
+    background-color: var(--bg-secondary); 
+    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.25); 
+    z-index: 1000; 
+    display: flex; 
+    flex-direction: column; 
+    transform: translateX(0); /* Panel is 'in' by default */
+    transition: transform 0.3s ease-in-out; 
+}
+/* This class is what hides it */
+.slide-panel.panel-closed { 
+    transform: translateX(100%); 
+}
+
+.panel-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background-color: var(--bg-tertiary); border-bottom: 1px solid var(--border-color); }
+.panel-header h2 { margin: 0; font-size: 1.2rem; border: none; color: var(--text-primary); }
+#close-settings-panel-btn { background: none; border: none; font-size: 2rem; cursor: pointer; color: #888; padding: 0; width: auto; }
+.panel-content { padding: 20px; }
+.settings-section { margin-bottom: 20px; }
+.settings-section h3 { font-size: 1rem; color: var(--text-primary); }
+.settings-section label { display: block; margin-bottom: 10px; }
+.settings-section small { color: var(--text-secondary); font-size: 0.9em; }
+.local-model-controls { display: flex; gap: 10px; }
+.panel-copy-btn { width: 100%; }
+
+/* Simple Nav Bar */
+.app-navbar { background-color: var(--bg-tertiary); padding: 1rem 0; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+.app-nav-container { width: 90%; max-width: 1400px; margin: 0 auto; }
+.app-logo { font-size: 1.1rem; font-weight: bold; color: var(--accent-blue); text-decoration: none; }
+
+@media (max-width: 992px) {
+    .io-grid { grid-template-columns: 1fr; }
+    .code-editor-grid { grid-template-columns: 1fr; }
+}
