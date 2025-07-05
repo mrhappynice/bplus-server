@@ -56,6 +56,10 @@ You must have [Node.js](https://nodejs.org/en/download/) (v18 or later recommend
     ```env
     GEMINI_API_KEY="YOUR_GOOGLE_GEMINI_API_KEY"
     ```
+4. **Whisper Server:**
+   Have your Whisper server running on port 5752. Get vulkan compatible exe from the [SoftWhisper repo](https://github.com/NullMagic2/SoftWhisper/releases/tag/May-2025) Tested working on AMD✅ in Windows. 
+5. (Optional) **Piper TTS:**
+   Download Piper into a folder named piper-tts with voice files. In code it is set to ljspeech-high <-- search for this to change the onnx file name.
 
 ## Usage
 
