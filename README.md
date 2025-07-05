@@ -3,7 +3,7 @@
 A unified Node.js server designed to host, create, and manage multiple self-contained web applications. This project acts as a meta-application, providing tools to build other applications directly from your browser, either manually or with the help of AI.
 
 <p align="center">
-  <img src="https://github.com/mrhappynice/bplus-server/blob/main/bplus-serv-pic1.JPG?raw=true" alt="alt text" width="500">
+  <img src="https://github.com/mrhappynice/bplus-server/blob/main/bplus-serv-pic1.JPG?raw=true" alt="alt text" width="88%">
 </p>
 
 ## About The Project
