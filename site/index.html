@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>bplus Server Homepage</title>
+    <meta name="description" content="Homepage and dashboard for the unified Node.js modular application server.">
+
+    <!-- Favicon Placeholders -->
+    <link rel="icon" href="favicon.ico" sizes="any">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Source+Code+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="container header-container">
+            <a href="#home" class="logo-link" aria-label="Homepage">
+                <span class="logo-text">bplus🤷🏻‍♂️ Server</span>
+            </a>
+
+            <nav class="main-navigation" aria-label="Main Site Navigation">
+                <ul>
+                    <li><a href="#home" class="nav-link active" data-section="home">Home</a></li>
+                    <li><a href="#architecture" class="nav-link" data-section="architecture">Architecture</a></li>
+                    <li><a href="#available-apps" class="nav-link" data-section="available-apps">Available Apps</a></li>
+                    <li><a href="#app-builder-guide" class="nav-link" data-section="app-builder-guide">App Builder</a></li>
+                    <li><a href="#app-manager-guide" class="nav-link" data-section="app-manager-guide">App Manager</a></li>
+                    <li><a href="#gen-studio-guide" class="nav-link" data-section="gen-studio-guide">Gen Studio</a></li>
+                </ul>
+            </nav>
+
+            <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="Toggle Menu" aria-expanded="false">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <main id="main-content">
+
+        <!-- ======================== -->
+        <!-- ====== HOME PAGE ======= -->
+        <!-- ======================== -->
+        <section id="home" class="content-section active-section">
+            <div class="hero-section">
+                <div class="container hero-content">
+                    <div class="hero-text">
+                        <h1>A <span class="highlight-green">Unified Foundation</span> for Modular Web Apps</h1>
+                        <p class="tagline">This server hosts multiple self-contained applications, managed by a central `server.js`. Explore the architecture, see available apps, or build your own.</p>
+                        <a href="#architecture" class="btn btn-primary btn-large cta-button" data-target-section="architecture">
+                            Learn The Architecture <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    <div class="hero-image">
+                        <img src="images/hero1.png" style="border-radius: 50%;" alt="Illustration of code structure" class="hero-illustration">
+                    </div>
+                </div>
+            </div>
+
+            <div class="container section-previews">
+                <h2 class="previews-title">Explore the Server</h2>
+                <div class="preview-grid">
+                    <article class="preview-card" data-target-section="architecture">
+                        <div class="preview-icon icon-blue"><i class="fa-solid fa-sitemap"></i></div>
+                        <h3>Server Architecture</h3>
+                        <p>Understand how `server.js` acts as a hub for mounting and serving all applications.</p>
+                        <span class="preview-link">See the Logic <i class="fa-solid fa-chevron-right"></i></span>
+                    </article>
+
+                    <article class="preview-card" data-target-section="gen-studio-guide">
+                        <div class="preview-icon icon-purple"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                        <h3>Gen Studio (AI)</h3>
+                        <p>Leverage AI to create and edit applications using natural language prompts.</p>
+                        <span class="preview-link">Go to Studio Guide <i class="fa-solid fa-chevron-right"></i></span>
+                    </article>
+
+                    <article class="preview-card" data-target-section="app-builder-guide">
+                        <div class="preview-icon icon-yellow"><i class="fa-solid fa-hammer"></i></div>
+                        <h3>App Builder (Manual)</h3>
+                        <p>Manually create and deploy a brand new application from scratch using code templates.</p>
+                        <span class="preview-link">Go to Builder <i class="fa-solid fa-chevron-right"></i></span>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================== -->
+        <!-- ==== ARCHITECTURE ====== -->
+        <!-- ======================== -->
+        <section id="architecture" class="content-section">
+            <div class="container section-container">
+                <header class="section-header">
+                    <h2><i class="fa-solid fa-sitemap icon-header"></i> Server Architecture</h2>
+                    <p>The system is designed for simplicity and modularity. A central server mounts and exposes each self-contained "mini-app".</p>
+                </header>
+
+                <div class="subsection">
+                    <h3>1. Main Server (`server.js`)</h3>
+                    <p>This is the entry point of the project. It uses Express.js to act as a hub. Its primary responsibility is to discover applications in the `apps/` directory and mount their front-end and back-end routes correctly.</p>
+                </div>
+                
+                <div class="subsection">
+                    <h3>2. App Directory Structure</h3>
+                    <p>Every application must exist within the `apps/` directory and follow a strict, simple structure. The `<app-slug>` is the unique, URL-friendly name for the app.</p>
+                    <pre><code class="language-bash">apps/
+└── &lt;app-slug&gt;/
+    ├── routes.js        (Backend API Logic)
+    └── public/          (All frontend files)
+        ├── index.html
+        ├── script.js
+        └── style.css</code></pre>
+                </div>
+
+                <div class="subsection">
+                    <h3>3. How Apps are Mounted & Accessed</h3>
+                    <p>The main `server.js` file automatically adds two routes for each application it finds:</p>
+                    <ul>
+                        <li><strong>Frontend:</strong> `app.use('/&lt;app-slug&gt;', ...)` makes the `public` directory available at `http://localhost:3000/&lt;app-slug&gt;`.</li>
+                        <li><strong>Backend:</strong> `app.use('/api/&lt;app-slug&gt;', ...)` prefixes all routes from that app's `routes.js` file. A route like `router.get('/data', ...)` becomes accessible at `http://localhost:3000/api/&lt;app-slug&gt;/data`.</li>
+                    </ul>
+                    <p>This separation ensures that frontend and backend routes for different apps never conflict.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================== -->
+        <!-- === AVAILABLE APPS ===== -->
+        <!-- ======================== -->
+        <section id="available-apps" class="content-section">
+            <div class="container section-container">
+                <header class="section-header">
+                    <h2><i class="fa-solid fa-cubes icon-header"></i> Available Applications</h2>
+                    <p>This is a list of all non-protected, manageable applications currently hosted by the server. Click any app to open it in a new tab.</p>
+                </header>
+                <div id="app-grid" class="app-grid">
+                    <!-- App cards will be dynamically inserted here by script.js -->
+                    <p id="app-list-status">Loading applications...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================== -->
+        <!-- == APP BUILDER GUIDE === -->
+        <!-- ======================== -->
+        <section id="app-builder-guide" class="content-section">
+             <div class="container section-container">
+                 <header class="section-header">
+                    <h2><i class="fa-solid fa-hammer icon-header"></i> App Builder Guide</h2>
+                    <p>The App Builder is a powerful tool for scaffolding new applications directly from your browser.</p>
+                </header>
+
+                <div class="subsection">
+                    <h3>Manual Creation</h3>
+                    <p>This tool provides a web interface with four text areas for the standard files (`routes.js`, `index.html`, `script.js`, `style.css`). When you provide an app name and click "Create App", the backend will:</p>
+                    <ol>
+                        <li>Create the necessary directory structure (`apps/&lt;your-app-name&gt;/public/`).</li>
+                        <li>Write the content from the text areas into the corresponding files.</li>
+                        <li><strong>Dynamically modify `server.js`</strong> to add the required `app.use()` routes for your new application.</li>
+                        <li>Trigger `nodemon` to automatically restart the server, making your new app instantly available.</li>
+                    </ol>
+                </div>
+
+                <div class="subsection">
+                    <h3>Using the AI Prompt Generator</h3>
+                    <p>For more complex applications, you can leverage a Large Language Model (LLM) to write the initial code for you. The App Builder includes a tool to generate a perfectly formatted prompt.</p>
+                    <ol>
+                        <li><strong>Enter an App Name:</strong> Fill in the "App Name" field at the top of the App Builder.</li>
+                        <li><strong>Generate Prompt:</strong> Click the "Generate with AI" button.</li>
+                        <li><strong>Describe Your Idea:</strong> A dialog box will ask you to describe the application you want to build. Be as descriptive as you like.</li>
+                        <li><strong>Copy the Full Prompt:</strong> The tool will generate a detailed prompt in a text area at the bottom of the page. Copy this entire text.</li>
+                        <li><strong>Use Your LLM:</strong> Paste the copied prompt into your preferred LLM (like ChatGPT, Gemini, Claude, etc.) and get the code response.</li>
+                        <li><strong>Paste the Code:</strong> The LLM's response should contain four code blocks. Copy the code from each block and paste it into the corresponding text area in the App Builder.</li>
+                        <li><strong>Create the App:</strong> Once all text areas are filled, click the "Create App" button. The server will build and mount your new AI-generated application.</li>
+                    </ol>
+                </div>
+
+                <a href="/app-builder" target="_blank" class="btn btn-primary" style="margin-top: 1rem;">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Open App Builder
+                </a>
+            </div>
+        </section>
+
+        <!-- ======================== -->
+        <!-- == APP MANAGER GUIDE === -->
+        <!-- ======================== -->
+        <section id="app-manager-guide" class="content-section">
+            <div class="container section-container">
+                 <header class="section-header">
+                     <h2><i class="fa-solid fa-sliders icon-header"></i> App Manager Guide</h2>
+                    <p>The App Manager is your control panel for existing applications.</p>
+                 </header>
+
+                 <div class="subsection">
+                     <h3>Core Features</h3>
+                     <p>From the App Manager, you can select any non-protected application and perform several key actions:</p>
+                     <ul>
+                         <li><strong>View & Edit:</strong> Load all four source files into text editors to make and save changes.</li>
+                         <li><strong>Delete:</strong> Completely remove an application. This action deletes the app's directory and also <strong>dynamically modifies `server.js`</strong> to remove its routing code.</li>
+                         <li><strong>Generate LLM Context:</strong> The manager includes a workflow to prepare your app's code for modification by a Large Language Model. It bundles the source code into a structured context file and wraps it in a prompt template, which you can then copy and paste into an LLM.</li>
+                     </ul>
+                      <a href="/app-manager" target="_blank" class="btn btn-primary">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open App Manager
+                    </a>
+                 </div>
+            </div>
+        </section>
+        
+        <!-- ======================== -->
+        <!-- == GEN STUDIO GUIDE === -->
+        <!-- ======================== -->
+        <section id="gen-studio-guide" class="content-section">
+             <div class="container section-container">
+                 <header class="section-header">
+                    <h2><i class="fa-solid fa-wand-magic-sparkles icon-header"></i> Gen Studio Guide</h2>
+                    <p>Gen Studio integrates AI directly into the development workflow, allowing you to create and edit apps with natural language.</p>
+                </header>
+
+                <div class="subsection">
+                    <h3>Creator Mode</h3>
+                    <p>The "Create App" tab streamlines the entire creation process:</p>
+                    <ol>
+                        <li><strong>Describe Your App:</strong> Provide a name for your new app and a detailed prompt describing what it should do. You can type or use your voice.</li>
+                        <li><strong>Generate Code:</strong> Click the "Generate Code" button. The studio sends your request to the configured AI model (Gemini or a local model).</li>
+                        <li><strong>Review:</strong> The AI's response is automatically parsed and the code for `routes.js`, `index.html`, `script.js`, and `style.css` is displayed in the "Review Generated Code" panel.</li>
+                        <li><strong>Create & Mount:</strong> If you are satisfied with the code, click "Create and Mount App". This performs the same file creation and `server.js` modification as the manual App Builder.</li>
+                    </ol>
+                </div>
+
+                <div class="subsection">
+                    <h3>Editor Mode</h3>
+                    <p>The "Edit App" tab allows you to refactor or add features to existing apps:</p>
+                    <ol>
+                        <li><strong>Select an App:</strong> Choose an existing, non-protected app from the dropdown menu. Its current source code will be loaded into read-only text areas.</li>
+                        <li><strong>Describe Changes:</strong> In the prompt box, describe the changes you want to make (e.g., "Change the title to 'My New App' and make the background color light blue").</li>
+                        <li><strong>Generate Edits:</strong> The studio sends the current code and your prompt to the AI. The AI then returns the complete, modified code for all four files.</li>
+                        <li><strong>Review & Save:</strong> The text areas will be updated with the AI's suggested changes. Review them and, if they are correct, click "Save Changes" to overwrite the old files.</li>
+                    </ol>
+                </div>
+
+                <a href="/gen-studio" target="_blank" class="btn btn-primary" style="margin-top: 1rem;">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Gen Studio
+                </a>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="site-footer">
+        <div class="container footer-content">
+            <div class="footer-about">
+                <h4>bplus🤷🏻‍♂️ Server</h4>
+                <p>A modular Node.js application server.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Core Apps</h4>
+                <ul>
+                    <li><a href="/gen-studio" target="_blank">Gen Studio</a></li>
+                    <li><a href="/app-builder" target="_blank">App Builder</a></li>
+                    <li><a href="/app-manager" target="_blank">App Manager</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h4>Legacy Apps</h4>
+                 <ul>
+                    <li><a href="/md-chat" target="_blank">MD-Chat</a></li>
+                    <li><a href="/pic-chat" target="_blank">Pic-Chat</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; <span id="current-year"></span> Your Project. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript File -->
+    <script src="script.js"></script>
+</body>
+</html>
