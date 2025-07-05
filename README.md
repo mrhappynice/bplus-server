@@ -153,4 +153,4 @@ This separation ensures that frontend and backend routes for different apps neve
 
 ## License
 
-EasyIP: For personal use, keep money out of it.
+Easy: For personal use, keep money out of it.
