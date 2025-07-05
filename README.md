@@ -63,6 +63,8 @@ You must have [Node.js](https://nodejs.org/en/download/) (v18 or later recommend
 5. (Optional) **Piper TTS:**
    Download Piper into a folder named piper_tts(within the mdChat app directory) with voice files. In code it is set to ljspeech-high <-- search for this to change the onnx file name.
 
+   *Broswer speech through the Web Speech API is also provided for STT/TTS. (Working in Chrome)
+
 ## Usage
 
 You can run the server in two modes:
